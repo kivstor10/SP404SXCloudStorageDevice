@@ -55,14 +55,17 @@ void setup() {
     Serial.println("ERROR - SD card initialisation failed!");
     return;    // init failed
   }
-  File file = SD.open("/data.txt");
-  if(!file) {
-    writeFile(SD, "/data.txt", "Card initialised! \r\n");
-  }
-  else {
-    Serial.println("File already exists");  
-  }
-  file.close();
+  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
+  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+  Serial.printf("Available space: %lluMB\n", SD.totalBytes() / (1024 * 1024) - SD.usedBytes() / (1024 * 1024));
+  // File file = SD.open("/data.txt");
+  // if(!file) {
+  //   writeFile(SD, "/data.txt", "Card initialised! \r\n");
+  // }
+  // else {
+  //   Serial.println("File already exists");  
+  // }
+  // file.close();
 }
 void loop() {
 
