@@ -1,6 +1,8 @@
 #include "FS.h"
 #include "SD.h"
 #include <SPI.h>
+#include <WiFiClientSecure.h>
+#include <AWS_IOT.h>
  
 #define SD_CS 5
 
@@ -47,25 +49,29 @@ void setup() {
   }
   uint8_t cardType = SD.cardType();
   if(cardType == CARD_NONE) {
-    Serial.println("No SD card attached");
+    Serial.println("\n\nNo SD card attached");
     return;
   }
-  Serial.println("Initializing SD card...");
+  Serial.println("\n\nInitializing SD card...");
   if (!SD.begin(SD_CS)) {
     Serial.println("ERROR - SD card initialisation failed!");
     return;    // init failed
   }
-  File file = SD.open("/data.txt");
-  if(!file) {
-    writeFile(SD, "/data.txt", "Card initialised! \r\n");
-  }
-  else {
-    Serial.println("File already exists");  
-  }
-  file.close();
+  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
+  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+  Serial.printf("Available space: %lluMB\n", SD.totalBytes() / (1024 * 1024) - SD.usedBytes() / (1024 * 1024));
+  // File file = SD.open("/data.txt");
+  // if(!file) {
+  //   writeFile(SD, "/data.txt", "Card initialised! \r\n");
+  // }
+  // else {
+  //   Serial.println("File already exists");  
+  // }
+  // file.close();
 }
 void loop() {
-
+  Serial.println("...");
+  delay(1000);
 }
  
 
