@@ -1,77 +1,126 @@
+#include "secrets.h"
+#include <WiFiClientSecure.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
+#include "WiFi.h"
 #include "FS.h"
 #include "SD.h"
 #include <SPI.h>
-#include <WiFiClientSecure.h>
-#include <AWS_IOT.h>
- 
-#define SD_CS 5
 
- 
-// Write to the SD card 
-void writeFile(fs::FS &fs, const char * path, const char * message) {
-  Serial.printf("Writing file: %s\n", path);
-  File file = fs.open(path, FILE_WRITE);
-  if(!file) {
-    Serial.println("Failed to open file for writing");
+#define AWS_IOT_PUBLISH_TOPIC   "esp32/sd_status"
+#define AWS_IOT_SUBSCRIBE_TOPIC "esp32/commands"
+#define SD_CS 5  // SD card chip select pin
+
+WiFiClientSecure net = WiFiClientSecure();
+PubSubClient client(net);
+
+void messageHandler(char* topic, byte* payload, unsigned int length);
+
+void setupSD() {
+  if (!SD.begin(SD_CS)) {
+    Serial.println("SD Card Mount Failed");
     return;
   }
-  if(file.print(message)) {
-    Serial.println("File written");
-  } else {
-    Serial.println("Write failed");
-  }
-  file.close();
-}
-// Append data to the SD card 
-void appendFile(fs::FS &fs, const char * path, const char * message) {
-  Serial.printf("Appending to file: %s\n", path);
-  File file = fs.open(path, FILE_APPEND);
-  if(!file) {
-    Serial.println("Failed to open file for appending");
+  
+  uint8_t cardType = SD.cardType();
+  if (cardType == CARD_NONE) {
+    Serial.println("No SD card attached");
     return;
   }
-  if(file.print(message)) {
-    Serial.println("Message appended");
-  } else {
-    Serial.println("Append failed");
-  }
-  file.close();
+  
+  Serial.println("SD Card Initialized");
 }
 
+uint64_t getAvailableSpace() {
+  if (SD.cardType() == CARD_NONE) return 0;
+  return (SD.totalBytes() - SD.usedBytes()) / (1024 * 1024); // Return in MB
+}
 
+void connectAWS() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+ 
+  Serial.println("Connecting to Wi-Fi");
+ 
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+ 
+  // Configure WiFiClientSecure
+  net.setCACert(AWS_CERT_CA);
+  net.setCertificate(AWS_CERT_CRT);
+  net.setPrivateKey(AWS_CERT_PRIVATE);
+ 
+  // Connect to MQTT broker
+  client.setServer(AWS_IOT_ENDPOINT, 8883);
+  client.setCallback(messageHandler);
+ 
+  Serial.println("Connecting to AWS IOT");
+ 
+  while (!client.connect(THINGNAME)) {
+    Serial.print(".");
+    delay(100);
+  }
+ 
+  if (!client.connected()) {
+    Serial.println("AWS IoT Timeout!");
+    return;
+  }
+ 
+  client.subscribe(AWS_IOT_SUBSCRIBE_TOPIC);
+  Serial.println("AWS IoT Connected!");
+}
+ 
+void publishSDStatus() {
+  uint64_t freeSpaceMB = getAvailableSpace();
+  uint64_t totalSpaceMB = SD.totalBytes() / (1024 * 1024);
+  
+  StaticJsonDocument<200> doc;
+  doc["storage"]["free"] = freeSpaceMB;
+  doc["storage"]["total"] = totalSpaceMB;
+  doc["storage"]["unit"] = "MB";
+  
+  char jsonBuffer[512];
+  serializeJson(doc, jsonBuffer);
+ 
+  if (client.publish(AWS_IOT_PUBLISH_TOPIC, jsonBuffer)) {
+    Serial.print("Published: ");
+    Serial.println(jsonBuffer);
+  } else {
+    Serial.println("Publish failed");
+  }
+}
+ 
+void messageHandler(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message received on topic: ");
+  Serial.println(topic);
+ 
+  StaticJsonDocument<200> doc;
+  deserializeJson(doc, payload);
+  
+  // Handle incoming commands if needed
+  if (doc.containsKey("command")) {
+    const char* command = doc["command"];
+    Serial.print("Command received: ");
+    Serial.println(command);
+  }
+}
+ 
 void setup() {
   Serial.begin(115200);
-  // Initialize SD card
-  SD.begin(SD_CS);  
-  if(!SD.begin(SD_CS)) {
-    Serial.println("Card Mount Failed");
-    return;
+  setupSD();
+  connectAWS();
+
+  delay(2000); // Allow time for WiFi to connect
+
+  if (SD.cardType() != CARD_NONE) {
+    publishSDStatus();
+  } else {
+    Serial.println("No SD card detected");
   }
-  uint8_t cardType = SD.cardType();
-  if(cardType == CARD_NONE) {
-    Serial.println("\n\nNo SD card attached");
-    return;
-  }
-  Serial.println("\n\nInitializing SD card...");
-  if (!SD.begin(SD_CS)) {
-    Serial.println("ERROR - SD card initialisation failed!");
-    return;    // init failed
-  }
-  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
-  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
-  Serial.printf("Available space: %lluMB\n", SD.totalBytes() / (1024 * 1024) - SD.usedBytes() / (1024 * 1024));
-  // File file = SD.open("/data.txt");
-  // if(!file) {
-  //   writeFile(SD, "/data.txt", "Card initialised! \r\n");
-  // }
-  // else {
-  //   Serial.println("File already exists");  
-  // }
-  // file.close();
-}
-void loop() {
-  Serial.println("...");
-  delay(1000);
 }
  
+void loop() {
 
+}
