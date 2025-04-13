@@ -1,16 +1,28 @@
 #ifndef APP_H
 #define APP_H
 
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Wire.h>
+
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+
 #include <Arduino.h>
+
 #include <FS.h>
 #include <SD.h>
 #include <SPI.h>
 
+
 extern WiFiClientSecure net;
 extern PubSubClient client;
+
+
+// ----------- OLED DISPLAY ----
+extern Adafruit_SSD1306 display;
+
 
 // ----------- NETWORK ---------
 void connectToWiFi();

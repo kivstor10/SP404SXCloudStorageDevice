@@ -13,6 +13,15 @@ void connectToWiFi() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
+    static unsigned long startAttemptTime = millis();
+    if (millis() - startAttemptTime > 20000) {
+      Serial.println("Connection error: Unable to connect to Wi-Fi within 20 seconds.");
+      display.clearDisplay();
+      display.setTextSize(1); 
+      display.setCursor(10, 10); 
+      display.print("Connection failed.");
+      display.display();
+    }
   }
 
   Serial.println("Connected to Wi-Fi!");

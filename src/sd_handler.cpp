@@ -7,14 +7,14 @@ void setupSD() {
     Serial.println("SD Card Mount Failed");
     return;
   }
-
+ 
   uint8_t cardType = SD.cardType();
   if (cardType == CARD_NONE) {
-    Serial.println("No SD card attached");
+    Serial.println("\n\nNo SD card attached");
     return;
   }
 
-  Serial.println("SD Card Initialized");
+  Serial.println("\n\nSD Card Initialized");
 }
 
 uint64_t getAvailableSpace() {
