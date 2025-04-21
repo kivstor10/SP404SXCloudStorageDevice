@@ -8,6 +8,7 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <HTTPClient.h> 
 
 #include <Arduino.h>
 
@@ -15,16 +16,21 @@
 #include <SD.h>
 #include <SPI.h>
 
+#include "secrets.h"
 
-extern WiFiClientSecure net;
-extern PubSubClient client;
 
+// extern WiFiClientSecure net;
+// extern PubSubClient client;
+extern HTTPClient https; 
 
 // ----------- OLED DISPLAY ----
 extern Adafruit_SSD1306 display;
 
 
 // ----------- NETWORK ---------
+extern WiFiClientSecure net;
+extern PubSubClient client;
+
 void connectToWiFi();
 void connectAWS();
 
@@ -33,9 +39,11 @@ void mqttLoop();
 void messageHandler(char* topic, byte* payload, unsigned int length);
 
 // ----------- REGISTRATION ----
+String getDeviceId();
 String generateRegistrationCode();
-void checkRegistrationStatus(const String& deviceId);
 void publishRegistrationCode(const String& deviceId, const String& code);
+bool checkDeviceLinked(const String& deviceId); // Declare the new function
+void checkRegistrationStatus(const String& deviceId); // Existing, but might be adjusted
 
 // ----------- SD CARD ---------
 void setupSD();

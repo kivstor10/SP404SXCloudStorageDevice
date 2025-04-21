@@ -1,10 +1,6 @@
 #include "app.h"
-#include "secrets.h"
 #include "WiFi.h"
 
-
-WiFiClientSecure net;
-PubSubClient client(net);
 
 void connectToWiFi() {
   Serial.println("Connecting to Wi-Fi...");
@@ -30,8 +26,11 @@ void connectToWiFi() {
 void connectAWS() {
   Serial.println("Connecting to AWS...");
   net.setCACert(AWS_CERT_CA);
+  Serial.println("CA Cert set");
   net.setCertificate(AWS_CERT_CRT);
+  Serial.println("Cert set");
   net.setPrivateKey(AWS_CERT_PRIVATE);
+  Serial.println("Private Key set");
 
   client.setServer(AWS_IOT_ENDPOINT, 8883);
   client.setCallback(messageHandler);
@@ -41,6 +40,12 @@ void connectAWS() {
     if (client.connect(THINGNAME)) {
       Serial.println("Connected to AWS!");
       client.subscribe(REG_CHECK_TOPIC_SUB);
+      Serial.println("Subscribed to " REG_CHECK_TOPIC_SUB);
+    }
+    else {
+      Serial.print("Connect failed, rc=");
+      Serial.println(client.state()); 
+      delay(5000); // Add a delay before retrying
     }
   }
 }

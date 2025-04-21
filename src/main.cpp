@@ -1,12 +1,21 @@
 #include "app.h"
-#include "secrets.h"
 #define OLED_ADDR 0x3C // OLED display TWI address
 
 
-bool isDeviceRegistered = false; 
-bool receivedRegStatus = false;  
+bool isDeviceRegistered = false;
+bool receivedRegStatus = false;
 
 Adafruit_SSD1306 display(-1);
+WiFiClientSecure net;
+PubSubClient client(net);
+HTTPClient https;
+
+// Forward declarations (now in app.h, but good practice to have here too)
+String getDeviceId();
+String generateRegistrationCode();
+void publishRegistrationCode(const String& deviceId, const String& code);
+bool checkDeviceLinked(const String& deviceId);
+void checkRegistrationStatus(const String& deviceId);
 
 void setup() {
   Serial.begin(115200);
@@ -23,15 +32,14 @@ void setup() {
   display.display();
   display.invertDisplay(false);
   delay(10);
-  display.setTextColor(SSD1306_WHITE);  
-  display.setTextSize(1); 
-  display.setCursor(28, 10); 
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(1);
+  display.setCursor(28, 10);
   display.print("Starting up...");
   display.display();
 
   // Setup SD card
   setupSD();
-
 
   // Connect to Wi-Fi and MQTT
   connectToWiFi();
@@ -39,29 +47,37 @@ void setup() {
 
   delay(2000);  // Give MQTT time to connect
 
-  // Check registration
-  randomSeed(analogRead(32)); // Seed random number generator using unused ADC pin
-  String deviceId = THINGNAME;
-  checkRegistrationStatus(deviceId);
+  // Get Device ID
+  String deviceId = getDeviceId();
 
-  // Wait max 5s for registration status
-  unsigned long startTime = millis();
-  while (!receivedRegStatus && millis() - startTime < 5000) {
-    mqttLoop();  // Keep MQTT alive and process messages
-    delay(100);
-  }
-
-  // If unregistered, publish code
-  if (!isDeviceRegistered) {
-    String regCode = generateRegistrationCode();
-    publishRegistrationCode(deviceId, regCode);
+  // Check if device is linked
+  if (checkDeviceLinked(deviceId)) {
+    isDeviceRegistered = true;
     display.clearDisplay();
-    display.setTextSize(2); 
-    display.setCursor(28, 10); 
-    display.print(regCode);
+    display.setTextSize(1);
+    display.setCursor(28, 7);
+    display.print("Device Linked");
+    display.setCursor(30, 17);
+    display.print("successfully!");
     display.display();
+    Serial.println("Device already linked.");
   } else {
-    Serial.println("Device already registered. Skipping code generation.");
+    isDeviceRegistered = false;
+    Serial.println("Device not linked. Proceeding with registration.");
+
+
+    // If still unregistered, publish code
+    if (!isDeviceRegistered) {
+      String regCode = generateRegistrationCode();
+      publishRegistrationCode(deviceId, regCode);
+      display.clearDisplay();
+      display.setTextSize(2);
+      display.setCursor(28, 10);
+      display.print(regCode);
+      display.display();
+    } else {
+      Serial.println("Device registered (linked). Skipping code generation on OLED."); //Changed the message
+    }
   }
 
   // Publish SD info
