@@ -49,11 +49,11 @@ bool checkDeviceLinked(const String& deviceId) {
   bool linked = false;
 
   WiFiClientSecure httpsNet;
-  httpsNet.setCACert(AWS_CERT_CA);       // Set the Root CA certificate (for server verification)
-  httpsNet.setCertificate(AWS_CERT_CRT); // Set the device certificate (for client authentication, if required by the server)
-  httpsNet.setPrivateKey(AWS_CERT_PRIVATE);  // Set the private key
+  httpsNet.setCACert(AWS_CERT_CA);       
+  httpsNet.setCertificate(AWS_CERT_CRT); 
+  httpsNet.setPrivateKey(AWS_CERT_PRIVATE);  
   https.begin(httpsNet, checkLinkEndpoint.c_str());
-  // https.addHeader("x-api-key", "YOUR_API_KEY");
+ 
 
   int httpCode = https.GET();
 

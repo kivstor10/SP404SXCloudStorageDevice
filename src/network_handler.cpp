@@ -45,7 +45,7 @@ void connectAWS() {
     else {
       Serial.print("Connect failed, rc=");
       Serial.println(client.state()); 
-      delay(5000); // Add a delay before retrying
+      delay(5000); // A delay before retrying
     }
   }
 }

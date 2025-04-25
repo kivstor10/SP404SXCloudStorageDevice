@@ -50,6 +50,9 @@ void setupSD();
 void publishSDStatus();
 uint64_t getAvailableSpace();
 
+// ----------- OLED ------------
+void showDeviceLinked();
+
 // ----------- TOPICS ----------
 #define REG_CHECK_TOPIC_SUB "esp32/registration/status"
 #define AWS_IOT_PUBLISH_TOPIC   "esp32/sd_status"

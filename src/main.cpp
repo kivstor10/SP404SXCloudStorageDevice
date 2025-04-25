@@ -42,7 +42,21 @@ void setup() {
   setupSD();
 
   // Connect to Wi-Fi and MQTT
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setCursor(28, 7);
+  display.print("Connecting to");
+  display.setCursor(30, 10);
+  display.print(WIFI_SSID);
+  display.display();
   connectToWiFi();
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setCursor(28, 7);
+  display.print("Connecting to");
+  display.setCursor(30, 10);
+  display.print("SP Cloud Servers...");
+  display.display();
   connectAWS();
 
   delay(2000);  // Give MQTT time to connect
@@ -53,13 +67,7 @@ void setup() {
   // Check if device is linked
   if (checkDeviceLinked(deviceId)) {
     isDeviceRegistered = true;
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setCursor(28, 7);
-    display.print("Device Linked");
-    display.setCursor(30, 17);
-    display.print("successfully!");
-    display.display();
+    showDeviceLinked(); 
     Serial.println("Device already linked.");
   } else {
     isDeviceRegistered = false;
