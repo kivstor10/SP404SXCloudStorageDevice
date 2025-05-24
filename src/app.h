@@ -52,15 +52,20 @@ uint64_t getAvailableSpace();
 
 // ----------- OLED ------------
 void showDeviceLinked();
+void showSDRemoved();
+void showReadyToUpload();
+void showFileDownloadProgress(int currentFile, int totalFiles, int percent);
 
 // ----------- TOPICS ----------
 #define REG_CHECK_TOPIC_SUB "esp32/registration/status"
-#define AWS_IOT_PUBLISH_TOPIC   "esp32/sd_status"
+#define AWS_IOT_PUBLISH_TOPIC "esp32/sd_status"
 #define AWS_IOT_SUBSCRIBE_TOPIC "esp32/commands"
-
-
 // ----------- SHARED FLAGS ----
 extern bool isDeviceRegistered;
 extern bool receivedRegStatus;
+
+// File download handler API 
+void initFileDownloadHandler();
+void enqueueDownloadUrl(const char* url, const char* s3Key);
 
 #endif

@@ -41,6 +41,12 @@ void connectAWS() {
       Serial.println("Connected to AWS!");
       client.subscribe(REG_CHECK_TOPIC_SUB);
       Serial.println("Subscribed to " REG_CHECK_TOPIC_SUB);
+      // Subscribe to presigned URLs topic using device ID
+      String deviceId = getDeviceId();
+      String presignedUrlTopic = "/presignedurls/" + deviceId;
+      client.subscribe(presignedUrlTopic.c_str());
+      Serial.print("Subscribed to: ");
+      Serial.println(presignedUrlTopic);
     }
     else {
       Serial.print("Connect failed, rc=");
