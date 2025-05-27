@@ -43,3 +43,11 @@ void showFileDownloadProgress(int currentFile, int totalFiles, int percent) {
     display.printf("progress: %d%%", percent);
     display.display();
 }
+
+void showLinkCode(const String& regCode) {
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setCursor(28, 10);
+    display.print(regCode);
+    display.display();
+}

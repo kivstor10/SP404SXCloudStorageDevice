@@ -55,6 +55,8 @@ void showDeviceLinked();
 void showSDRemoved();
 void showReadyToUpload();
 void showFileDownloadProgress(int currentFile, int totalFiles, int percent);
+void showLinkCode(const String& regCode);
+void waitForDeviceLink(const String& regCode);
 
 // ----------- TOPICS ----------
 #define REG_CHECK_TOPIC_SUB "esp32/registration/status"

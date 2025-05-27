@@ -13,6 +13,14 @@ extern bool isDeviceRegistered;
 //   return str;
 // }
 
+void waitForDeviceLink() {
+    while (!isDeviceRegistered) {
+        showDeviceLinked(); // Or show a 'Please link device' message if you have one
+        delay(500); // Poll every 500ms
+        // Optionally, add a timeout or button to break out
+    }
+}
+
 void messageHandler(char* topic, byte* payload, unsigned int length) {
   // ---- New Detailed Logging - START ----
   Serial.println(); 
@@ -132,6 +140,7 @@ void messageHandler(char* topic, byte* payload, unsigned int length) {
             } else if (strcmp(status_json, "not linked") == 0 && myDeviceId == receivedDeviceId_json) {
                 Serial.println("Device is NOT LINKED and Device IDs match.");
                 isDeviceRegistered = false;
+                // Optionally show a 'not linked' message
             } else {
                 Serial.println("Registration status/Device ID mismatch.");
             }

@@ -21,6 +21,7 @@ String generateRegistrationCode();
 void publishRegistrationCode(const String& deviceId, const String& code);
 bool checkDeviceLinked(const String& deviceId);
 void checkRegistrationStatus(const String& deviceId);
+void waitForDeviceLink(const String& regCode); // Forward declaration added here
 
 void setup() {
   Serial.begin(115200);
@@ -92,6 +93,9 @@ void setup() {
       display.setCursor(28, 10);
       display.print(regCode);
       display.display();
+
+      // Wait for device to be linked
+      waitForDeviceLink(regCode);
     } else {
       Serial.println("Device registered (linked). Skipping code generation on OLED."); //Changed the message
     }
@@ -188,4 +192,14 @@ void loop() {
                   (unsigned int)ESP.getMinFreeHeap());
     lastHeapLogTime = millis();
   }
+}
+
+// Blocks execution until device is linked. Shows the registration code on the OLED while waiting.
+void waitForDeviceLink(const String& regCode) {
+    showLinkCode(regCode);
+    // Wait for isDeviceRegistered to become true, but also yield to MQTT loop
+    while (!isDeviceRegistered) {
+        mqttLoop(); // Allow MQTT to process incoming messages
+        delay(50);  // Small delay to avoid busy loop
+    }
 }
