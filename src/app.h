@@ -43,7 +43,7 @@ String getDeviceId();
 String generateRegistrationCode();
 void publishRegistrationCode(const String& deviceId, const String& code);
 bool checkDeviceLinked(const String& deviceId); // Declare the new function
-void checkRegistrationStatus(const String& deviceId); // Existing, but might be adjusted
+void checkRegistrationStatus(const String& deviceId); 
 
 // ----------- SD CARD ---------
 void setupSD();

@@ -1,25 +1,19 @@
-#include "app.h" // This should include secrets.h (for AWS_CERT_CA) and SD.h, etc.
-#include <Arduino.h>
+#include "app.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/queue.h>
-#include <HTTPClient.h>
-#include <WiFiClientSecure.h> // Make sure this is included
 
-// Assuming AWS_CERT_CA is declared in secrets.h and included via app.h
-// If not, you might need: extern const char AWS_CERT_CA[];
 
 // --- Function to display download progress ---
 void showDownloadProgress(int currentFile, int totalFilesInBatch, int percent) {
-    showFileDownloadProgress(currentFile, totalFilesInBatch, percent); // Call your OLED handler
-    char buf[40]; // Increased buffer size slightly
+    showFileDownloadProgress(currentFile, totalFilesInBatch, percent); 
+    char buf[40]; 
     snprintf(buf, sizeof(buf), "File %d/%d", currentFile, totalFilesInBatch);
     Serial.printf("[Progress] %s: %d%%\n", buf, percent);
 }
 
 // --- Definitions ---
-// #define DOWNLOAD_TASK_STACK_SIZE 8192 // Using dynamic calculation now
-// #define WRITE_TASK_STACK_SIZE    8192 // Using dynamic calculation now
+
 #define URL_QUEUE_LENGTH        5
 #define URL_MAX_LENGTH          2048 // Ensure this is long enough for your longest S3 presigned URL
 #define CHUNK_SIZE              1024 // Size of each data chunk read from HTTP stream
@@ -75,8 +69,6 @@ void initFileDownloadHandler() {
 // --- Enqueue URL for Download ---
 void enqueueDownloadUrl(const char* url, const char* s3Key) { // Pass s3Key for filename
     if (urlQueue && url && s3Key) {
-        // For simplicity, we'll pass the full URL and extract the filename in downloadTask
-        // Alternatively, you could pass a struct with url and filename
         char urlToQueue[URL_MAX_LENGTH];
         strncpy(urlToQueue, url, URL_MAX_LENGTH - 1);
         urlToQueue[URL_MAX_LENGTH - 1] = '\0';
@@ -121,7 +113,7 @@ void downloadTask(void* pvParameters) {
                 continue;
             }
 
-            // Extract filename from the S3 key part of the URL (more robustly)
+            // Extract filename from the S3 key part of the URL
             char extractedFilename[sizeof(FileChunk::filename)] = "unknown.dat"; // Default
             const char* s3KeyStart = strstr(currentPresignedUrl, ".com/"); // Find end of domain
             if (s3KeyStart) {
@@ -135,7 +127,6 @@ void downloadTask(void* pvParameters) {
                 }
 
                 if (keyLength > 0) {
-                    // Now find the actual filename (part after the last '/') in the S3 key
                     const char* lastSlashInKey = NULL;
                     for (int i = keyLength - 1; i >= 0; i--) {
                         if (s3KeyStart[i] == '/') {
@@ -159,7 +150,7 @@ void downloadTask(void* pvParameters) {
             WiFiClientSecure clientSecure; // Use a new client for each request for safety
 
             // --- CRITICAL: SET THE ROOT CA CERTIFICATE ---
-            clientSecure.setCACert(AWS_CERT_CA); // AWS_CERT_CA from secrets.h
+            clientSecure.setCACert(AWS_CERT_CA); 
 
             bool downloadSuccessful = false;
             int totalBytesExpected = -1;
@@ -206,7 +197,7 @@ void downloadTask(void* pvParameters) {
                                     }
                                     int percent = 0;
                                     if (totalBytesExpected > 0) percent = (bytesDownloadedThisFile * 100) / totalBytesExpected;
-                                    else if (totalBytesExpected == 0) percent = 100; // For 0-byte file
+                                    else if (totalBytesExpected == 0) percent = 100; 
                                     showDownloadProgress(fileDownloadAttemptCounter, 1 /*TODO: total in batch*/, percent);
 
                                 } else if (chunk.length < 0) { // Error on read
@@ -218,7 +209,6 @@ void downloadTask(void* pvParameters) {
                                 // All expected bytes read
                                 break;
                             } else {
-                                // Stream not available, but not all data read or connection dropped.
                                 vTaskDelay(pdMS_TO_TICKS(10)); // Yield
                             }
                              if (!http.connected() && (totalBytesExpected == -1 || bytesDownloadedThisFile < totalBytesExpected)) {
@@ -230,7 +220,6 @@ void downloadTask(void* pvParameters) {
                         if (bytesDownloadedThisFile != totalBytesExpected && totalBytesExpected > 0) {
                             Serial.printf("[DownloadTask] WARN: Bytes downloaded (%d) != total expected (%d) for %s\n",
                                           bytesDownloadedThisFile, totalBytesExpected, extractedFilename);
-                            // downloadSuccessful = false; // Optionally mark as failed
                         }
 
                     } else { // HTTP code not OK
@@ -301,11 +290,10 @@ void writeTask(void* pvParameters) {
                 // This is the first data chunk for a new file
                 if (SD.cardType() == CARD_NONE) {
                     Serial.println("[WriteTask] SD card not present! Attempting to re-init SD...");
-                    // setupSD(); // Call your SD initialization function
                     if (!SD.begin(/* pass CS pin if not default */)) { // Attempt to re-initialize
                          Serial.println("[WriteTask] SD.begin() failed on re-attempt.");
                     }
-                    vTaskDelay(pdMS_TO_TICKS(500)); // Give it a moment
+                    vTaskDelay(pdMS_TO_TICKS(500)); 
                     if (SD.cardType() == CARD_NONE) {
                         Serial.printf("[WriteTask] SD still not present. Skipping file: %s\n", chunk.filename);
                         // Drain any subsequent chunks for this phantom file until its 'isLast' marker
@@ -314,11 +302,8 @@ void writeTask(void* pvParameters) {
                     }
                 }
                 // Construct full path: ensure baseWavDirectory exists or create it
-                // For simplicity, assuming it exists. SD.mkdir() might be needed.
                 snprintf(currentFilePath, sizeof(currentFilePath), "%s/%s", baseWavDirectory, chunk.filename);
 
-                // Delete existing file if you want to overwrite, otherwise SD.open(..., FILE_WRITE) appends or creates.
-                // if (SD.exists(currentFilePath)) SD.remove(currentFilePath);
 
                 currentOutFile = SD.open(currentFilePath, FILE_WRITE);
                 if (!currentOutFile) {
@@ -371,15 +356,14 @@ void writeTask(void* pvParameters) {
                 }
                 currentFilePath[0] = '\0';
             } else if (chunk.isLast) {
-                // Received an 'isLast' marker but no file was open (e.g., download failed before first chunk)
+                // Received an 'isLast' marker but no file was open 
                 Serial.println("[WriteTask] Received 'isLast' marker, but no file was open or being processed.");
             } else if (!isFileOpen && chunk.length > 0) {
-                // Data chunk received, but we couldn't open a file for it (e.g., SD error on first chunk)
                 Serial.printf("[WriteTask] Received data chunk for '%s' but no file is open. Discarding.\n", chunk.filename);
                  while (!chunk.isLast) { // Drain the rest of this file's chunks
                     if (xQueueReceive(chunkQueue, &chunk, pdMS_TO_TICKS(100)) != pdTRUE) break;
                 }
             }
-        } // if xQueueReceive
-    } // for(;;)
+        } 
+    } 
 }
