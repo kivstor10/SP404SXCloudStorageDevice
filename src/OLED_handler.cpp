@@ -33,12 +33,12 @@ void showReadyToUpload(){
     display.display();
 }
 
-void showFileDownloadProgress(int currentFile, int totalFiles, int percent) {
+void showFileDownloadProgress(int currentFile, int percent) {
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
     display.setCursor(0, 0);
-    display.printf("File %d/%d", currentFile, totalFiles);
+    display.printf("File %d", currentFile);
     display.setCursor(0, 16);
     display.printf("progress: %d%%", percent);
     display.display();

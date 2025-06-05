@@ -59,7 +59,7 @@ void connectAWS() {
 // Function to keep MQTT client active and handle incoming messages
 void mqttLoop() {
   if (!client.connected()) {
-      connectAWS(); // Reconnect if not connected
+      connectAWS(); 
   }
   client.loop();  
 }

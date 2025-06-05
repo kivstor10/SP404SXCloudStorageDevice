@@ -5,17 +5,17 @@
 
 
 // --- Function to display download progress ---
-void showDownloadProgress(int currentFile, int totalFilesInBatch, int percent) {
-    showFileDownloadProgress(currentFile, totalFilesInBatch, percent); 
+void showDownloadProgress(int currentFile, int percent) {
+    showFileDownloadProgress(currentFile, percent); 
     char buf[40]; 
-    snprintf(buf, sizeof(buf), "File %d/%d", currentFile, totalFilesInBatch);
+    snprintf(buf, sizeof(buf), "File %d/%d", currentFile);
     Serial.printf("[Progress] %s: %d%%\n", buf, percent);
 }
 
 // --- Definitions ---
 
 #define URL_QUEUE_LENGTH        5
-#define URL_MAX_LENGTH          2048 // Ensure this is long enough for your longest S3 presigned URL
+#define URL_MAX_LENGTH          2048 
 #define CHUNK_SIZE              1024 // Size of each data chunk read from HTTP stream
 #define CHUNK_QUEUE_LENGTH      2    // Number of chunks that can be buffered between download and write tasks
 
@@ -39,7 +39,7 @@ void writeTask(void* pvParameters);
 // --- Initialization ---
 void initFileDownloadHandler() {
     size_t freeHeap = ESP.getFreeHeap();
-    size_t usableHeapForTasks = freeHeap / 2; // Reserve half for system, wifi, ssl etc.
+    size_t usableHeapForTasks = freeHeap / 2; // Reserve half for system, wifi, ssl
     size_t dynamicStackSize = usableHeapForTasks / 2; // Split remaining between the two tasks
 
     // Clamp stack size to reasonable limits
@@ -170,7 +170,7 @@ void downloadTask(void* pvParameters) {
                         Serial.printf("[DownloadTask] File size: %d bytes for %s\n", totalBytesExpected, extractedFilename);
 
                         if (totalBytesExpected == 0) { // Handle 0-byte files explicitly
-                             showDownloadProgress(fileDownloadAttemptCounter, 1 /*TODO: total in batch*/, 100);
+                             showDownloadProgress(fileDownloadAttemptCounter, 100);
                         }
 
                         while (http.connected() && (totalBytesExpected == -1 || bytesDownloadedThisFile < totalBytesExpected || totalBytesExpected == 0)) {
@@ -198,7 +198,7 @@ void downloadTask(void* pvParameters) {
                                     int percent = 0;
                                     if (totalBytesExpected > 0) percent = (bytesDownloadedThisFile * 100) / totalBytesExpected;
                                     else if (totalBytesExpected == 0) percent = 100; 
-                                    showDownloadProgress(fileDownloadAttemptCounter, 1 /*TODO: total in batch*/, percent);
+                                    showDownloadProgress(fileDownloadAttemptCounter, percent);
 
                                 } else if (chunk.length < 0) { // Error on read
                                     Serial.printf("[DownloadTask] Stream read error for %s.\n", extractedFilename);

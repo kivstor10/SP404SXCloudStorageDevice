@@ -15,17 +15,16 @@ WiFiClientSecure net;
 PubSubClient client(net);
 HTTPClient https;
 
-// Forward declarations (now in app.h, but good practice to have here too)
 String getDeviceId();
 String generateRegistrationCode();
 void publishRegistrationCode(const String& deviceId, const String& code);
 bool checkDeviceLinked(const String& deviceId);
 void checkRegistrationStatus(const String& deviceId);
-void waitForDeviceLink(const String& regCode); // Forward declaration added here
+void waitForDeviceLink(const String& regCode); 
 
 void setup() {
   Serial.begin(115200);
-  delay(100);   // Debounce
+  delay(100);   
 
   // Initialize OLED display
   if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {

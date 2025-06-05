@@ -19,8 +19,6 @@
 #include "secrets.h"
 
 
-// extern WiFiClientSecure net;
-// extern PubSubClient client;
 extern HTTPClient https; 
 
 // ----------- OLED DISPLAY ----
@@ -54,7 +52,7 @@ uint64_t getAvailableSpace();
 void showDeviceLinked();
 void showSDRemoved();
 void showReadyToUpload();
-void showFileDownloadProgress(int currentFile, int totalFiles, int percent);
+void showFileDownloadProgress(int currentFile, int percent);
 void showLinkCode(const String& regCode);
 void waitForDeviceLink(const String& regCode);
 
